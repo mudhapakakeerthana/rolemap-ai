@@ -1,1 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RoleMap AI — Prompt Builder</title>
+  <link rel="stylesheet" href="styles.css" />
+  <meta name="description" content="Generate a master prompt for ChatGPT that outputs a structured career positioning strategy." />
+</head>
+<body>
+  <header class="header">
+    <div class="container nav">
+      <a class="brand" href="index.html">
+        <span class="logo">RM</span>
+        <span>RoleMap AI</span>
+      </a>
+      <nav class="navlinks">
+        <a href="index.html">Home</a>
+        <a href="privacy.html">Privacy</a>
+        <button id="themeBtn" class="btn ghost" type="button">Toggle theme</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="section">
+      <h1 class="h1">Prompt Builder</h1>
+      <p class="sub">
+        Fill what you can. Click <b>Generate Prompt</b>, then <b>Copy</b> and paste into ChatGPT.
+      </p>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Candidate Details</div>
+
+          <label class="label">Current level</label>
+          <select id="level" class="input">
+            <option>Student / New Grad</option>
+            <option>Early Career (0–3 yrs)</option>
+            <option>Mid Career (3–7 yrs)</option>
+          </select>
+
+          <label class="label">Target industry (generic)</label>
+          <input id="industry" class="input" placeholder="e.g., Healthcare, Finance, Tech, Consulting" />
+
+          <label class="label">Location preference</label>
+          <input id="location" class="input" placeholder="e.g., US (any), Chicago, Remote" />
+
+          <label class="label">Goal (1–2 lines)</label>
+          <input id="goal" class="input" placeholder="e.g., Land an analyst role in 8–12 weeks; later pivot into product analytics" />
+
+          <label class="label">Constraints (optional)</label>
+          <input id="constraints" class="input" placeholder="e.g., limited coding; prefers SQL-heavy roles; visa constraints" />
+
+          <label class="label">Roles you’re considering (optional)</label>
+          <input id="roles" class="input" placeholder="e.g., Data Analyst, BI Analyst, Ops Analyst" />
+
+          <div class="btnrow">
+            <button class="btn primary" id="genBtn" type="button">Generate Prompt</button>
+            <button class="btn" id="saveBtn" type="button">Save Inputs</button>
+            <button class="btn ghost" id="clearBtn" type="button">Clear</button>
+          </div>
+
+          <div id="status" class="status"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Job Description (optional)</div>
+          <textarea id="jd" class="textarea" placeholder="Paste job description here if you have one."></textarea>
+
+          <div class="divider"></div>
+
+          <div class="card-title">Resume Text (paste from PDF/Word)</div>
+          <textarea id="resume" class="textarea" placeholder="Paste your resume text here."></textarea>
+
+          <div class="small">
+            Tip: If your resume is long, paste only the most relevant sections (Experience + Skills + Projects).
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <div class="card-title">Generated Master Prompt</div>
+        <div class="small">
+          This prompt forces ChatGPT to output a structured strategy and prevents generic advice.
+        </div>
+
+        <div class="btnrow" style="margin-top:10px;">
+          <button class="btn primary" id="copyBtn" type="button">Copy Prompt</button>
+          <button class="btn" id="openBtn" type="button">Open ChatGPT</button>
+          <a class="btn ghost" id="feedbackLink" href="#" target="_blank" rel="noreferrer">Feedback Form</a>
+        </div>
+
+        <pre id="output" class="pre"></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container foot">
+      <div>© <span id="year"></span> RoleMap AI</div>
+      <div class="footlinks">
+        <a href="index.html">Home</a>
+        <a href="privacy.html">Privacy</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ====== SETTINGS YOU CAN EDIT ======
+    // Put your Google Form link here (optional). If you don’t have one, leave it as "".
+    const FEEDBACK_FORM_URL = "";
+    // ==================================
+
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // theme
+    const themeBtn = document.getElementById('themeBtn');
+    const savedTheme = localStorage.getItem('rm_theme');
+    if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+
+    themeBtn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('rm_theme', next);
+    });
+
+    // feedback link
+    const fb = document.getElementById('feedbackLink');
+    if (FEEDBACK_FORM_URL) {
+      fb.href = FEEDBACK_FORM_URL;
+    } else {
+      fb.style.display = "none";
+    }
+
+    const ids = ["level","industry","location","goal","constraints","roles","jd","resume"];
+    const el = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
+
+    const status = document.getElementById('status');
+    const output = document.getElementById('output');
+
+    function setStatus(msg, kind="") {
+      status.textContent = msg;
+      status.className = "status " + kind;
+    }
+
+    function buildPrompt() {
+      const level = el.level.value.trim();
+      const industry = el.industry.value.trim();
+      const location = el.location.value.trim();
+      const goal = el.goal.value.trim();
+      const constraints = el.constraints.value.trim();
+      const roles = el.roles.value.trim();
+      const jd = el.jd.value.trim();
+      const resume = el.resume.value.trim();
+
+      const system = `
+You are RoleMap AI — a strategic career positioning advisor.
+You do NOT give generic resume tips.
+You MUST follow the exact structure below and be specific, practical, and grounded in the resume text.
+
+Rules:
+- No fluff. No motivational talk.
+- Do not invent experience. Use only what is in the resume.
+- If information is missing, state assumptions briefly and proceed.
+- If a job description is provided, tailor the outputs to it.
+- Prefer concise bullets. Be recruiter-friendly.
+
+Now follow these steps and headings exactly:
+
+1) Candidate Snapshot (3 bullets)
+2) Best-Fit Roles (max 5)
+   - For each: Role Fit Score (0–100) + 1-line justification
+3) Role Targeting Strategy
+   - Roles to prioritize NOW vs LATER (with reasoning)
+4) Skill Gaps
+   - Must-have vs Nice-to-have
+5) Narrative Gaps
+   - What’s unclear/weak + what evidence to add
+6) Positioning Statement (2–3 lines)
+7) Resume Fix List (top 8)
+   - Each as: "Change X → To Y → Because Z"
+8) Interview Proof Points (6 bullets)
+9) 90-Day Action Plan (week-by-week)
+10) Application Strategy
+   - Company types to target
+   - Search keywords
+   - Avoid list (what not to apply to right now)
+`;
+
+      const user = `
+Candidate Level: ${level}
+Target Industry: ${industry || "Not specified"}
+Location Preference: ${location || "Not specified"}
+Goal: ${goal || "Not specified"}
+Constraints: ${constraints || "None provided"}
+Roles Considering: ${roles || "None provided"}
+
+Job Description (optional):
+${jd || "None provided"}
+
+Resume Text:
+${resume || "Not provided (ask user to paste resume text)"}
+`;
+
+      return system.trim() + "\n\n" + user.trim();
+    }
+
+    // Generate
+    document.getElementById('genBtn').addEventListener('click', () => {
+      if (!el.resume.value.trim()) {
+        setStatus("Please paste your resume text first.", "warn");
+        output.textContent = "";
+        return;
+      }
+      const prompt = buildPrompt();
+      output.textContent = prompt;
+      setStatus("Prompt generated. Click Copy Prompt and paste into ChatGPT.", "ok");
+    });
+
+    // Copy
+    document.getElementById('copyBtn').addEventListener('click', async () => {
+      if (!output.textContent.trim()) {
+        setStatus("Generate the prompt first.", "warn");
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(output.textContent);
+        setStatus("Copied ✅ Open ChatGPT and paste it.", "ok");
+      } catch {
+        setStatus("Copy blocked by browser. Select the text and copy manually.", "warn");
+      }
+    });
+
+    // Open ChatGPT
+    document.getElementById('openBtn').addEventListener('click', () => {
+      window.open("https://chatgpt.com/", "_blank");
+    });
+
+    // Save inputs (local storage)
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      const data = {};
+      ids.forEach(id => data[id] = el[id].value);
+      localStorage.setItem("rm_inputs", JSON.stringify(data));
+      setStatus("Inputs saved locally in your browser.", "ok");
+    });
+
+    // Load saved inputs
+    (function loadSaved() {
+      const raw = localStorage.getItem("rm_inputs");
+      if (!raw) return;
+      try {
+        const data = JSON.parse(raw);
+        ids.forEach(id => { if (data[id] !== undefined) el[id].value = data[id]; });
+        setStatus("Loaded saved inputs.", "ok");
+      } catch {}
+    })();
+
+    // Clear
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      ids.forEach(id => el[id].value = (id === "level" ? el.level.value : ""));
+      output.textContent = "";
+      setStatus("Cleared.", "");
+    });
+  </script>
+</body>
+</html>
 
