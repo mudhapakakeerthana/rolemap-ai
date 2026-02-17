@@ -1,1 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RoleMap AI — Privacy</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="container nav">
+      <a class="brand" href="index.html">
+        <span class="logo">RM</span>
+        <span>RoleMap AI</span>
+      </a>
+      <nav class="navlinks">
+        <a href="app.html">Prompt Builder</a>
+        <a href="index.html">Home</a>
+        <button id="themeBtn" class="btn ghost" type="button">Toggle theme</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="section">
+      <h1 class="h1">Privacy</h1>
+      <div class="card">
+        <div class="card-body">
+          <p><b>RoleMap AI is a static website.</b> It does not send your data to a server.</p>
+          <ul>
+            <li>Inputs you type (resume text, job description) stay in your browser.</li>
+            <li>If you click “Save Inputs”, the data is saved in <b>your browser’s local storage</b> only.</li>
+            <li>When you copy the prompt and paste into ChatGPT, your data is governed by ChatGPT’s policies.</li>
+          </ul>
+          <p class="small">
+            Recommendation: Do not paste highly sensitive personal identifiers. You can remove phone/address if needed.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container foot">
+      <div>© <span id="year"></span> RoleMap AI</div>
+      <div class="footlinks">
+        <a href="index.html">Home</a>
+        <a href="app.html">Prompt Builder</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    const themeBtn = document.getElementById('themeBtn');
+    const savedTheme = localStorage.getItem('rm_theme');
+    if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+
+    themeBtn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('rm_theme', next);
+    });
+  </script>
+</body>
+</html>
 
