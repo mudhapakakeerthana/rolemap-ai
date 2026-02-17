@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RoleMap AI — Career Positioning Copilot</title>
+  <style>
+    :root { --bg:#0b1020; --card:#121a33; --text:#e8ecff; --muted:#b6c0ff; --line:#263158; --btn:#6ea8ff; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 28px 18px 60px; }
+    .hero { display:flex; gap:18px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
+    h1 { font-size: 34px; line-height: 1.1; margin: 0 0 8px; }
+    .tag { display:inline-block; padding:6px 10px; border:1px solid var(--line); border-radius:999px; color: var(--muted); font-size: 13px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+    .grid { display:grid; gap:14px; }
+    @media (min-width: 900px){ .grid-2 { grid-template-columns: 1fr 1fr; } }
+    label { display:block; font-size: 13px; color: var(--muted); margin: 12px 0 6px; }
+    input, textarea, select {
+      width: 100%; box-sizing: border-box; padding: 10px 12px;
+      border: 1px solid var(--line); border-radius: 12px;
+      background: #0f1733; color: var(--text);
+      outline: none;
+    }
+    textarea { min-height: 120px; resize: vertical; }
+    .btnrow { display:flex; gap:10px; flex-wrap:wrap; margin-top: 14px; }
+    button {
+      border: 0; border-radius: 12px; padding: 10px 14px; cursor:pointer;
+      background: var(--btn); color:#091022; font-weight: 650;
+    }
+    button.secondary { background: transparent; border:1px solid var(--line); color: var(--text); font-weight: 600; }
+    .small { color: var(--muted); font-size: 13px; line-height: 1.4; }
+    pre {
+      white-space: pre-wrap; word-break: break-word;
+      background:#0f1733; border:1px solid var(--line);
+      border-radius: 14px; padding: 12px; margin: 12px 0 0;
+      color: var(--text);
+    }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    a { color: #9dc3ff; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <span class="tag">Pilot-ready GenAI (no-code)</span>
+        <h1>RoleMap AI</h1>
+        <div class="small">
+          A career positioning copilot for students and early-career professionals.
+          It generates a structured strategy you can paste into ChatGPT: best-fit roles, readiness scores, narrative gaps, and a 90-day roadmap.
+        </div>
+      </div>
+      <div class="card" style="max-width:360px;">
+        <div style="font-weight:700; margin-bottom:6px;">How it works</div>
+        <ol class="small" style="margin:0; padding-left: 18px;">
+          <li>Fill the fields below</li>
+          <li>Click <b>Generate & Copy Prompt</b></li>
+          <li>Paste into ChatGPT</li>
+        </ol>
+        <div class="footer">Tip: This is designed to reduce random applications by producing a role-focused plan.</div>
+      </div>
+    </div>
+
+    <div class="grid grid-2" style="margin-top:18px;">
+      <div class="card">
+        <div style="font-weight:750;">Problem</div>
+        <div class="small" style="margin-top:6px;">
+          Many applicants optimize resumes but lack a clear positioning strategy: which roles fit, what gaps matter most, and how to pitch their story.
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-weight:750;">Why GenAI</div>
+        <div class="small" style="margin-top:6px;">
+          GenAI can synthesize background + goals + constraints into a structured strategy (not just keyword matching).
+          This tool enforces a consistent, grounded output format.
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <div style="font-weight:800; font-size:18px;">Prompt Builder</div>
+      <div class="small" style="margin-top:6px;">
+        Fill only what you have. The tool will generate one “master prompt” you can run in ChatGPT.
+      </div>
+
+      <div class="grid grid-2" style="margin-top:10px;">
+        <div>
+          <label>Your current level</label>
+          <select id="level">
+            <option>Student / New Grad</option>
+            <option>Early Career (0–3 yrs)</option>
+            <option>Mid Career (3–7 yrs)</option>
+          </select>
+
+          <label>Target industry (generic)</label>
+          <input id="industry" placeholder="e.g., Healthcare, Finance, Tech, Retail, Consulting" />
+
+          <label>Location preference</label>
+          <input id="location" placeholder="e.g., US (any), Chicago, Remote, India, Europe" />
+
+          <label>Goal (1–2 lines)</label>
+          <input id="goal" placeholder="e.g., Land a Data Analyst role in 8–12 weeks; eventually move into Product Analytics" />
+        </div>
+
+        <div>
+          <label>Constraints (optional)</label>
+          <input id="constraints" placeholder="e.g., needs sponsorship later; limited coding; prefers SQL-heavy roles" />
+
+          <label>Top roles you are considering (optional)</label>
+          <input id="roles" placeholder="e.g., Data Analyst, BI Analyst, Operations Analyst" />
+
+          <label>Job description (optional)</label>
+          <textarea id="jd" placeholder="Paste a job description here if you have one."></textarea>
+        </div>
+      </div>
+
+      <label>Resume text (paste from PDF/Word)</label>
+      <textarea id="resume" placeholder="Paste your resume text here."></textarea>
+
+      <div class="btnrow">
+        <button onclick="buildPrompt()">Generate & Copy Prompt</button>
+        <button class="secondary" onclick="clearAll()">Clear</button>
+        <button class="secondary" onclick="openChatGPT()">Open ChatGPT</button>
+      </div>
+
+      <div id="status" class="small" style="margin-top:10px;"></div>
+
+      <pre id="output" aria-label="Generated Prompt"></pre>
+
+      <div class="footer">
+        Optional pilot feedback form link: replace <code>YOUR_FORM_LINK</code> below in the HTML if you want.
+        <br/>Feedback Form: <a href="YOUR_FORM_LINK" target="_blank" rel="noreferrer">Submit feedback</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function buildPrompt() {
+      const level = document.getElementById('level').value.trim();
+      const industry = document.getElementById('industry').value.trim();
+      const location = document.getElementById('location').value.trim();
+      const goal = document.getElementById('goal').value.trim();
+      const constraints = document.getElementById('constraints').value.trim();
+      const roles = document.getElementById('roles').value.trim();
+      const jd = document.getElementById('jd').value.trim();
+      const resume = document.getElementById('resume').value.trim();
+
+      const system = `
+You are RoleMap AI — a strategic career positioning advisor.
+You do NOT give generic resume tips.
+You MUST follow the exact structure below and be specific and practical.
+
+Rules:
+- No fluff. No motivational talk.
+- If information is missing, state assumptions briefly and proceed.
+- If a job description is provided, tailor the outputs to it.
+- Outputs must be grounded in the resume text. Do not invent experience.
+- Prefer concise bullet points.
+
+Now follow these steps and headings exactly:
+1) Candidate Snapshot (3 bullets)
+2) Best-Fit Roles (max 5) with Role Fit Score (0–100) and 1-line justification each
+3) Role Targeting Strategy (which roles to prioritize now vs later)
+4) Skill Gaps (must-have vs nice-to-have)
+5) Narrative Gaps (what’s unclear/weak in the story)
+6) Positioning Statement (2–3 lines) tailored to target roles
+7) Resume Fix List (top 8 changes, each written as “Change X → To Y → Because Z”)
+8) Interview Proof Points (6 bullets that the candidate should be ready to discuss)
+9) 90-Day Action Plan (Week-by-week; projects + networking + applications)
+10) Application Strategy (company types to target, search keywords, and avoid list)
+`;
+
+      const user = `
+Candidate Level: ${level}
+Target Industry: ${industry || "Not specified"}
+Location Preference: ${location || "Not specified"}
+Goal: ${goal || "Not specified"}
+Constraints: ${constraints || "None provided"}
+Roles Considering: ${roles || "None provided"}
+
+Job Description (if any):
+${jd || "None provided"}
+
+Resume Text:
+${resume || "Not provided (ask user to paste resume text)"}
+`;
+
+      const fullPrompt = system.trim() + "\n\n" + user.trim();
+
+      document.getElementById('output').textContent = fullPrompt;
+
+      // Copy to clipboard
+      navigator.clipboard.writeText(fullPrompt).then(() => {
+        document.getElementById('status').textContent = "✅ Prompt copied. Open ChatGPT and paste it.";
+      }).catch(() => {
+        document.getElementById('status').textContent = "⚠️ Could not auto-copy. Please manually copy from the prompt box.";
+      });
+    }
+
+    function clearAll() {
+      ["industry","location","goal","constraints","roles","jd","resume"].forEach(id => {
+        document.getElementById(id).value = "";
+      });
+      document.getElementById('output').textContent = "";
+      document.getElementById('status').textContent = "";
+    }
+
+    function openChatGPT() {
+      window.open("https://chatgpt.com/", "_blank");
+      document.getElementById('status').textContent = "Opened ChatGPT. Paste the copied prompt there.";
+    }
+  </script>
+</body>
+</html>
